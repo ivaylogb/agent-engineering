@@ -1,6 +1,8 @@
 # Step 3 — Evaluate the composed agent end-to-end
 
-Scaffolding plus typed tools is necessary but not sufficient. Composition isn't proven until there are scores. Step 3 runs `agent-eval-loop`'s simulator and scorer against the Step 2-composed agent, producing real per-category scores across the full intent set.
+Scaffolding and typed tools were necessary, but composition isn't proven until there are scores. 
+
+Step 3 runs `agent-eval-loop`'s simulator and scorer against the Step 2-composed agent, producing real per-category scores across the full intent set.
 
 ## What this step uses
 
@@ -13,17 +15,17 @@ Scaffolding plus typed tools is necessary but not sufficient. Composition isn't 
 
 ## Critical disclosures
 
-These are not caveats — they are honest constraints on what the scores below mean.
+Some honest contraints about the current system.
 
 ### 1. Runtime mismatch
 
 Step 2 and Step 3 run the agent through `AgentRunner`'s single-prompt tool-use loop. The scaffolded `runner.py` from Step 1 (with classify → dispatch → flow → handoff via dedicated `classification.j2` and `handoff.j2` templates) is **not** used here. The eval measures the agent in the simpler runtime, not in the scaffolded orchestrator.
 
-Consequence visible in the scores below: on the `security_oos` scenario, the agent engaged step-by-step with security advice (change your password, log out other sessions, turn on 2FA) instead of immediately escalating to a human security team. The system prompt's instruction to "escalate, not handle" out-of-scope intents is interpreted flexibly without the scaffolded handoff template enforcing it. This is a real result, not a bug — and an instructive one. The scaffolded runner is a more sophisticated alternative; see `build/support_agent/runner.py` for that orchestration.
+Consequence visible in the scores below: on the `security_oos` scenario, the agent engaged step-by-step with security advice (change your password, log out other sessions, turn on 2FA) instead of immediately escalating to a human security team. The system prompt's instruction to "escalate, not handle" out-of-scope intents is interpreted flexibly without the scaffolded handoff template enforcing it. This is a useful result. The scaffolded runner is a more sophisticated alternative; see `build/support_agent/runner.py` for that orchestration.
 
 ### 2. Uncalibrated judges
 
-Judges run with no `JudgeExample` few-shot anchors. The `agent-eval-loop` README explicitly recommends calibrating against human annotations (Cohen's kappa > 0.6) before trusting scores in absolute terms. **Scores below are directional, not absolute** — useful for comparing changes within this codebase across iterations, not for cross-product benchmarking. Production evals would add 5–10 human-annotated examples per rubric.
+Judges run with no `JudgeExample` few-shot anchors. The `agent-eval-loop` README explicitly recommends calibrating against human annotations (Cohen's kappa > 0.6) before trusting scores in absolute terms. **Scores below are directional** — useful for comparing changes within this codebase across iterations, not for cross-product benchmarking. Production evals would add 5–10 human-annotated examples per rubric.
 
 ### 3. Single persona
 
@@ -98,7 +100,7 @@ See `outputs/transcripts/security_oos.json` for the full 9-message transcript.
 
 **Where the agent underperformed.** `routine_adherence` and `completeness` are weaker (0.78 / 0.75). The biggest single drag is `security_oos` at 0.46 (1/4 judges passed, turn count maxed at 9 of `max_turns × 2 + 1`). The agent treated a security incident as something to walk the customer through rather than something to escalate — exactly the failure mode the runtime-mismatch disclosure predicts. The system prompt says "out-of-scope intents are escalated, not handled", but under `AgentRunner`'s single-prompt loop there's no `handoff.j2` template enforcing it, so the model interprets the instruction permissively.
 
-**What this suggests for the next iteration.** The signal is: if out-of-scope routing matters, don't rely on the system prompt alone — wire in the scaffolded classify-then-dispatch runtime (Step 1's `support_agent/runner.py`), or add an explicit `escalate_to_team` tool with structured arguments so the policy becomes mechanically enforceable instead of textually requested. Either change is the natural Step 4 of an improvement loop; `agent-eval-loop`'s `improve/optimizer.py` and `ImprovementLoop` exist for exactly this cycle.
+**What this suggests for the next iteration.** The signal is: if out-of-scope routing matters, don't rely on the system prompt alone - wire in the scaffolded classify-then-dispatch runtime (Step 1's `support_agent/runner.py`), or add an explicit `escalate_to_team` tool with structured arguments so the policy becomes mechanically enforceable instead of textually requested. Either change is the natural Step 4 of an improvement loop; `agent-eval-loop`'s `improve/optimizer.py` and `ImprovementLoop` exist for exactly this cycle.
 
 ## What this proves
 
@@ -108,4 +110,4 @@ The four-layer model composes end-to-end:
 - **Typed tools** (Step 2, `agent-tool-kit`) replaced stubs with `@tool`-decorated handlers carrying Pydantic schemas, structured errors, and an audit log.
 - **Evaluation** (Step 3, `agent-eval-loop`) ran the composed system against six scenarios with one persona and four judges, producing per-category scores and an honest assessment of where the system is strong and where it leaks.
 
-The kits are independent — different repos, different APIs — but the interfaces line up (`AgentRunner` reads `Tool.tool_schema` via duck typing; `ConversationGenerator` constructs its own `AgentRunner` per conversation from the same config). No glue code was needed beyond two `sys.path` inserts and one `build_config()` import. That's the composition story, with real numbers.
+The recipes are independent with different repos and APIs, but the interfaces line up (`AgentRunner` reads `Tool.tool_schema` via duck typing; `ConversationGenerator` constructs its own `AgentRunner` per conversation from the same config). No glue code was needed beyond two `sys.path` inserts and one `build_config()` import.
