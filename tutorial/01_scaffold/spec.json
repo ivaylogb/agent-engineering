@@ -1,0 +1,135 @@
+{
+  "name": "support_agent",
+  "description": "Customer-support agent that triages incoming requests and handles order-status, refund, and account-info requests; escalates billing, security, and legal questions.",
+  "domain": "ecommerce customer support",
+  "audience": "end customers contacting support via chat",
+  "intents": [
+    {
+      "name": "order_status",
+      "description": "Customer is asking about the status, location, or delivery date of an existing order.",
+      "in_scope": true,
+      "signals": ["where is my order", "tracking number", "hasn't arrived", "when will it ship"]
+    },
+    {
+      "name": "refund_request",
+      "description": "Customer wants to initiate a refund for an item they received or ordered.",
+      "in_scope": true,
+      "signals": ["want a refund", "return this", "money back", "damaged"]
+    },
+    {
+      "name": "account_info",
+      "description": "Customer wants to view or change profile-level account information: email, shipping address, phone, name. Not an order-specific question.",
+      "in_scope": true,
+      "signals": ["change my email", "update my address", "where's my account", "update phone number"]
+    },
+    {
+      "name": "billing_question",
+      "description": "Customer is asking about charges, subscriptions, or invoices unrelated to a specific order.",
+      "in_scope": false,
+      "signals": ["wrong charge", "subscription", "invoice", "credit card"]
+    },
+    {
+      "name": "security",
+      "description": "Customer is reporting account compromise, suspicious logins, password reset issues, or 2FA problems.",
+      "in_scope": false,
+      "signals": ["hacked", "suspicious login", "reset my password", "2FA", "didn't authorize"]
+    },
+    {
+      "name": "legal",
+      "description": "Customer is asking about terms of service, privacy policy, data deletion, GDPR/CCPA requests, or threatening legal action.",
+      "in_scope": false,
+      "signals": ["delete my data", "GDPR", "lawyer", "terms of service", "lawsuit"]
+    }
+  ],
+  "tools": [
+    {
+      "name": "lookup_order",
+      "purpose": "Look up an order by its order number and return current status and shipping details.",
+      "when_to_use": [
+        "Customer provides an explicit order number (format ORD-XXXXX).",
+        "Customer is asking where their order is and you have the order number."
+      ],
+      "when_not_to_use": [
+        "Customer hasn't given an order number — ask for it first.",
+        "The intent is a refund and you already have the order's status from a prior call this turn."
+      ],
+      "inputs": [
+        {"name": "order_id", "type": "string", "description": "Order number, format ORD-XXXXX."}
+      ],
+      "output_shape": "An object with order_id, status (one of: placed, shipped, delivered, cancelled), tracking_number (nullable), and estimated_delivery (nullable ISO date)."
+    },
+    {
+      "name": "initiate_refund",
+      "purpose": "Initiate a refund for a specific order. Idempotent on (order_id, reason).",
+      "when_to_use": [
+        "Customer has stated they want a refund and you've confirmed the order exists.",
+        "The order's status indicates it is refundable (delivered or shipped)."
+      ],
+      "when_not_to_use": [
+        "Order status is cancelled — refunds don't apply.",
+        "You have not yet confirmed the order exists via lookup_order."
+      ],
+      "inputs": [
+        {"name": "order_id", "type": "string", "description": "Order number, format ORD-XXXXX."},
+        {"name": "reason", "type": "string", "description": "Short reason for the refund, e.g. 'damaged_on_arrival'."}
+      ],
+      "output_shape": "An object with refund_id, order_id, status (initiated|already_processed), and amount_cents."
+    }
+  ],
+  "flows": [
+    {
+      "intent": "order_status",
+      "steps": [
+        "Confirm you have an order number; if not, ask the customer for one.",
+        "Call lookup_order with the order number.",
+        "If status is shipped or delivered, return the status, tracking number, and estimated delivery.",
+        "If status is cancelled, tell the customer and offer to help further.",
+        "Produce a final structured response with the status and a short customer-facing summary."
+      ],
+      "output_fields": [
+        {"name": "order_id", "description": "The order number that was looked up."},
+        {"name": "status", "description": "Current order status."},
+        {"name": "customer_message", "description": "Short message to send to the customer."}
+      ]
+    },
+    {
+      "intent": "refund_request",
+      "steps": [
+        "Ask for the order number if not provided.",
+        "Call lookup_order to confirm the order exists and is refundable.",
+        "If refundable, call initiate_refund with the order_id and a short reason.",
+        "If not refundable (cancelled), explain why and stop.",
+        "Produce a final structured response with the refund_id and a short customer-facing summary."
+      ],
+      "output_fields": [
+        {"name": "order_id", "description": "The order being refunded."},
+        {"name": "refund_id", "description": "Refund identifier from initiate_refund, or null if not refundable."},
+        {"name": "customer_message", "description": "Short message to send to the customer."}
+      ]
+    },
+    {
+      "intent": "account_info",
+      "steps": [
+        "Identify which account field the customer wants to change or view (email, address, phone, name).",
+        "If the customer has not yet stated the new value, ask for it.",
+        "Do not actually change the account — this flow only gathers the request; mutations require identity verification handled out-of-band.",
+        "Produce a final structured response containing the field, the requested new value (if given), and a customer-facing message explaining next steps (typically: confirm via email link).",
+        "If the request is ambiguous (e.g., 'fix my account'), ask one clarifying question before producing the response."
+      ],
+      "output_fields": [
+        {"name": "field", "description": "Which account field the customer wants to change (email|address|phone|name|other)."},
+        {"name": "requested_value", "description": "The new value the customer provided, or null if not yet given."},
+        {"name": "customer_message", "description": "Short message describing next steps for the customer."}
+      ]
+    }
+  ],
+  "confidence_threshold": 0.7,
+  "eval_examples": [
+    {"input": "where is order ORD-12345?", "expected_intent": "order_status"},
+    {"input": "I want my money back for ORD-44444, it was damaged on arrival", "expected_intent": "refund_request"},
+    {"input": "I need to change my shipping address on my account", "expected_intent": "account_info"},
+    {"input": "why was I charged twice this month?", "expected_intent": "billing_question"},
+    {"input": "I think someone logged into my account from a country I've never been to", "expected_intent": "security"},
+    {"input": "I have a question about my recent activity", "expected_intent": "unknown"}
+  ]
+}
