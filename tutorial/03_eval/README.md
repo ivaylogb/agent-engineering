@@ -90,7 +90,7 @@ Per-scenario aggregates (`aggregate_score`, `passed/total` judges, conversation 
 
 ### The headline finding — security_oos at 0.46
 
-The agent walked the customer through password change, active-sessions review, and 2FA enablement on a security report — instead of escalating to a human security team. That is exactly what disclosure #1 (Runtime mismatch) predicted: without the scaffolded `handoff.j2` template, the system prompt's "escalate, don't handle" policy becomes advice the model can override when it can be helpful.
+The agent walked the customer through password change, active-sessions review, and 2FA enablement on a security report — instead of escalating to a human security team. That's exactly what point #1 (Runtime mismatch) above predicts: without the scaffolded `handoff.j2` template, the system prompt's "escalate, don't handle" policy becomes advice the model can override when it can be helpful.
 
 See `outputs/transcripts/security_oos.json` for the full 9-message transcript.
 
@@ -98,7 +98,7 @@ See `outputs/transcripts/security_oos.json` for the full 9-message transcript.
 
 **What worked.** `tool_selection` and `response_accuracy` are the two strongest categories at 0.87 and 0.83. The `@tool` schemas (with `when_not_to_use` guidance from Step 2) reach the wire intact — the model picks the right tool, with correct arguments, and recovers when handed a real result. `order_status_happy` and `account_info_happy` both scored at or near ceiling: the tool path and the tool-less flow both behave.
 
-**Where the agent underperformed.** `routine_adherence` and `completeness` are weaker (0.78 / 0.75). The biggest single drag is `security_oos` at 0.46 (1/4 judges passed, turn count maxed at 9 of `max_turns × 2 + 1`). The agent treated a security incident as something to walk the customer through rather than something to escalate — exactly the failure mode the runtime-mismatch disclosure predicts. The system prompt says "out-of-scope intents are escalated, not handled", but under `AgentRunner`'s single-prompt loop there's no `handoff.j2` template enforcing it, so the model interprets the instruction permissively.
+**Where the agent underperformed.** `routine_adherence` and `completeness` are weaker (0.78 / 0.75). The biggest single drag is `security_oos` at 0.46 (1/4 judges passed, turn count maxed at 9 of `max_turns × 2 + 1`). The agent treated a security incident as something to walk the customer through rather than something to escalate — exactly the failure mode point #1 above predicts. The system prompt says "out-of-scope intents are escalated, not handled", but under `AgentRunner`'s single-prompt loop there's no `handoff.j2` template enforcing it, so the model interprets the instruction permissively.
 
 **What this suggests for the next iteration.** The signal is: if out-of-scope routing matters, don't rely on the system prompt alone - wire in the scaffolded classify-then-dispatch runtime (Step 1's `support_agent/runner.py`), or add an explicit `escalate_to_team` tool with structured arguments so the policy becomes mechanically enforceable instead of textually requested. Either change is the natural Step 4 of an improvement loop; `agent-eval-loop`'s `improve/optimizer.py` and `ImprovementLoop` exist for exactly this cycle.
 
