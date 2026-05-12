@@ -13,27 +13,27 @@ Step 3 runs `agent-eval-loop`'s simulator and scorer against the Step 2-composed
 - `agent_eval_loop.evaluate.scorer.Scorer` — runs judges across transcripts and aggregates per-category and overall scores.
 - Step 2's `tools.py` (`@tool`-decorated `lookup_order` and `initiate_refund`) and `build_config()` — imported, not duplicated. The `Tool` instances and `AgentConfig` reaching the simulator are byte-identical to what Step 2 ran.
 
-## Critical disclosures
+## How to read these numbers
 
-Some honest contraints about the current system.
+Four things to keep in mind when reading the table below.
 
 ### 1. Runtime mismatch
 
-Step 2 and Step 3 run the agent through `AgentRunner`'s single-prompt tool-use loop. The scaffolded `runner.py` from Step 1 (with classify → dispatch → flow → handoff via dedicated `classification.j2` and `handoff.j2` templates) is **not** used here. The eval measures the agent in the simpler runtime, not in the scaffolded orchestrator.
+Step 2 and Step 3 run the agent through `AgentRunner`'s single-prompt tool-use loop. The scaffolded `runner.py` (classify → dispatch → flow → handoff via `classification.j2` and `handoff.j2`) isn't used here. You're scoring the simpler runtime, not the full scaffold.
 
-Consequence visible in the scores below: on the `security_oos` scenario, the agent engaged step-by-step with security advice (change your password, log out other sessions, turn on 2FA) instead of immediately escalating to a human security team. The system prompt's instruction to "escalate, not handle" out-of-scope intents is interpreted flexibly without the scaffolded handoff template enforcing it. This is a useful result. The scaffolded runner is a more sophisticated alternative; see `build/support_agent/runner.py` for that orchestration.
+You'll see the cost of that in `security_oos` below. The agent walks the customer through a password change and 2FA setup instead of escalating to a human team. A system prompt tells the model what to do; nothing here makes it. To score the scaffolded runtime instead, swap in `build/support_agent/runner.py`.
 
 ### 2. Uncalibrated judges
 
-Judges run with no `JudgeExample` few-shot anchors. The `agent-eval-loop` README explicitly recommends calibrating against human annotations (Cohen's kappa > 0.6) before trusting scores in absolute terms. **Scores below are directional** — useful for comparing changes within this codebase across iterations, not for cross-product benchmarking. Production evals would add 5–10 human-annotated examples per rubric.
+Judges run with no `JudgeExample` few-shot anchors. Compare scores against each other across iterations of this same setup. Don't compare them to scores from a different eval. To anchor the absolute numbers, hand-annotate 5–10 examples per rubric and pass them in as `JudgeExample` entries.
 
 ### 3. Single persona
 
-This pass uses only `happy_path_novice` (Alex — novice, polite, neutral). Production evals run the full archetype set (5 personas in `PERSONA_ARCHETYPES`) to cover communication-style variance.
+One persona: `happy_path_novice` (Alex — novice, polite, neutral). The kit ships four others in `PERSONA_ARCHETYPES`; an aggressive or confused persona will surface different failure modes. Add them as a second pass once you're iterating.
 
 ### 4. Asymmetric `max_turns`
 
-In-scope scenarios get `max_turns: 10`. Out-of-scope scenarios get `max_turns: 4` — the persona LLM doesn't always emit `[END_CONVERSATION]` after an escalation, and burning ten turns of a customer being told "I can't help with that" both wastes API spend and degrades scores artificially.
+In-scope scenarios get `max_turns: 10`, out-of-scope get `max_turns: 4`. The persona LLM doesn't reliably emit `[END_CONVERSATION]` after a refusal, so without the lower cap an out-of-scope scenario burns 10 turns of "I can't help with that" — wasted API calls and noisier scores.
 
 ## The scenarios
 
