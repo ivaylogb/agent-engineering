@@ -1,0 +1,67 @@
+name: "support_agent_eval"
+description: "Six scenarios for the composed support agent — one per intent in spec.json."
+
+scenarios:
+  # --- In-scope: three intents, max_turns=10 ---
+
+  - id: order_status_happy
+    name: "Order status — happy path"
+    description: "Customer asks about a shipped order; the order_id is in our fixture."
+    category: happy_path
+    difficulty: easy
+    opening_message: "Hi, can you check on my order ORD-12345?"
+    expected_tools: ["lookup_order"]
+    expected_outcome: "Agent calls lookup_order, returns shipped status + tracking + estimated delivery."
+    max_turns: 10
+
+  - id: refund_request_happy
+    name: "Refund request — happy path"
+    description: "Customer wants a refund for a delivered order that arrived damaged."
+    category: happy_path
+    difficulty: easy
+    opening_message: "I want to return my damaged order ORD-44444 for a refund — it arrived broken."
+    expected_tools: ["lookup_order", "initiate_refund"]
+    expected_outcome: "Agent confirms the order via lookup_order, then initiates a refund and reports the refund id."
+    max_turns: 10
+
+  - id: account_info_happy
+    name: "Account info — tool-less flow"
+    description: "Customer wants to change shipping address. No tool call needed — the flow gathers the address."
+    category: happy_path
+    difficulty: easy
+    opening_message: "I need to change my shipping address."
+    expected_tools: []
+    expected_outcome: "Agent asks for the new address, explains verification step, produces a structured response."
+    max_turns: 10
+
+  # --- Out-of-scope: three intents, max_turns=4 ---
+
+  - id: billing_question_oos
+    name: "Billing question — out of scope"
+    description: "Customer asks about an unfamiliar charge; agent should refuse to handle and route to the billing team."
+    category: escalation
+    difficulty: medium
+    opening_message: "Why was I charged $19.99 last month? I don't remember subscribing to anything."
+    expected_tools: []
+    expected_outcome: "Agent declines to handle the billing question and refers the customer to the billing team."
+    max_turns: 4
+
+  - id: security_oos
+    name: "Security — out of scope"
+    description: "Customer reports possible account compromise; agent should immediately route to security."
+    category: escalation
+    difficulty: medium
+    opening_message: "I think someone hacked my account — there are logins from countries I've never been to."
+    expected_tools: []
+    expected_outcome: "Agent immediately escalates to security with appropriate urgency; no in-line analysis."
+    max_turns: 4
+
+  - id: legal_oos
+    name: "Legal — out of scope"
+    description: "Customer makes a GDPR data deletion request; agent should route to the legal/privacy team."
+    category: escalation
+    difficulty: medium
+    opening_message: "I want to delete all my data under GDPR."
+    expected_tools: []
+    expected_outcome: "Agent acknowledges the request and routes it to the legal/privacy team rather than handling it inline."
+    max_turns: 4
