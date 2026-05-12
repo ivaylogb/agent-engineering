@@ -64,6 +64,42 @@ Each kit stands on its own. Pick the layer matching your immediate pain:
 
 The four kits are designed to compose. The toolkit's `tool_handlers` slot into the eval loop's `AgentRunner` directly. The context kit's `ContextWindow` wraps the same runner. The skill kit's reference agent is built on the same SDK patterns.
 
+## Recipes — which layers matter for your agent shape
+
+The four kits are independent but agent shapes have characteristic patterns. These recipes name which kits matter most for a given shape.
+
+**Customer support / triage agent.** Routes incoming requests by intent, calls tools to look up customer/account data, escalates out-of-scope.
+
+- **Critical:** agent-skill-kit (calibrated routing, structured handoff, scaffolder for the agent shape itself), agent-tool-kit (lookup tools must not fabricate when records are missing)
+- **Matters:** agent-eval-loop (routing accuracy must hold across prompt changes)
+- **Less critical:** agent-context-kit (conversations are typically short)
+
+**Long-running research agent.** Multi-step planning, many tool calls, accumulating findings, may span many turns.
+
+- **Critical:** agent-context-kit (context will blow up without budget/compaction/sub-agent isolation), agent-tool-kit (tools that return verbose data must compress before reaching the model)
+- **Matters:** agent-eval-loop (multi-step trajectories are hard to evaluate by inspection)
+- **Less critical:** agent-skill-kit at first (more critical once you have multiple research agents to compare)
+
+**Coding / dev-tool agent.** Reads code, edits files, runs commands, operates in a repo.
+
+- **Critical:** agent-skill-kit (skills encode review and audit workflows; broken-candidate-style audits work well here), agent-tool-kit (file-edit and shell tools need typed contracts and idempotency)
+- **Matters:** agent-context-kit (codebases are large; selective context loading is the difference between useful and useless)
+- **Less critical:** agent-eval-loop early on; matters once the agent has stable enough behavior to regression-test
+
+**Internal automation agent.** Triggered by webhook or schedule, performs deterministic workflow, structured output for downstream systems.
+
+- **Critical:** agent-tool-kit (output is consumed by automation, so structured errors and typed schemas are mandatory)
+- **Matters:** agent-eval-loop (failures are silent — the eval is your only signal)
+- **Less critical:** agent-context-kit (typically single-turn), agent-skill-kit (less iteration cycle on a stable workflow)
+
+**Greenfield agent — you're starting from scratch.** Don't know yet which failures you'll hit.
+
+- **Start here:** agent-skill-kit's `scaffold_agent` produces an agent matching the methodology. Then add the other layers as failures appear: agent-tool-kit when you find your tools are brittle, agent-eval-loop when you can't tell if a prompt change helped, agent-context-kit when the window is the bottleneck.
+
+The four kits are designed to compose — adopt them as the agent's failure modes emerge, not all at once.
+
+---
+
 ## License
 
 MIT.
