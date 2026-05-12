@@ -2,15 +2,14 @@
 
 An engineering system for production-grade LLM agents.
 
-## Thesis
-
-Most production agents fail in predictable ways: brittle tool calls, stale context, behavior regressions after prompt edits, inconsistent reviews. These aren't prompt problems. They're system problems.
-
-This is a set of four open-source kits that together codify what production agents need: evaluation loops, reliable tool contracts, runtime context management, and repeatable development workflows. Each kit is independently useful. Together they form an engineering discipline for shipping agents that behave predictably at scale.
+This is a set of four open-source kits that together codify what production agents need: evaluation loops, reliable tool contracts, runtime context management, and repeatable development workflows. Each kit can be used independently. 
+Together they form an engineering discipline for shipping agents that behave predictably at scale.
 
 ## Common failure modes
 
-Most agents fail in predictable ways. Pick the one you're seeing and go straight to the kit that addresses it.
+Most production agents fail in predictable ways: brittle tool calls, stale context, behavior regressions after prompt edits, inconsistent reviews.
+
+Pick the one you're seeing and go straight to the kit that addresses it.
 
 | You're seeing | Use this kit |
 |---|---|
@@ -96,7 +95,7 @@ The four kits are independent but agent shapes have characteristic patterns. The
 
 - **Start here:** agent-skill-kit's `scaffold_agent` produces an agent matching the methodology. Then add the other layers as failures appear: agent-tool-kit when you find your tools are brittle, agent-eval-loop when you can't tell if a prompt change helped, agent-context-kit when the window is the bottleneck.
 
-The four kits are designed to compose — adopt them as the agent's failure modes emerge, not all at once.
+The four kits are designed to compose — adopt them as the agent's failure modes emerge, rather than all at once.
 
 ---
 
