@@ -96,7 +96,7 @@ PYTHONPATH=. ../.venv/bin/python -m support_agent.runner \
     --input "I need to change my shipping address on my account" --show-trace
 ```
 
-Trace and response from one turn against `claude-sonnet-4-20250514`:
+Trace and response from one turn against `claude-sonnet-4-5`:
 
 ```
 [classify] sending classification prompt
@@ -118,5 +118,7 @@ Trace and response from one turn against `claude-sonnet-4-20250514`:
 ```
 
 The smoke test exercises one classification + flow against an `account_info` input to confirm the scaffolded agent functions end-to-end: the classifier returns the new intent at 0.95 confidence, the runner dispatches into the tool-less `account_info` flow, and the flow produces a structured response asking the customer for the missing information. The tool path is not exercised here because the `account_info` flow is tool-less by design; Step 2 exercises the tool path through the `order_status` and `refund_request` flows, and full intent coverage runs in Step 3 (eval).
+
+Next: [Step 2 — wire typed `@tool` handlers into AgentRunner](02_tools/README.md).
 
 ---
