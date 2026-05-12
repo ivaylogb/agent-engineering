@@ -12,7 +12,9 @@ Each step has a script you run and an expected outcome. If the script doesn't ru
 
 ```
 tutorial/
-  01_scaffold/        spec.json + scaffold script
+  01_scaffold/        spec.json — the agent description fed to scaffold_agent
+  02_tools/           tools.py (@tool handlers) + run.py (AgentRunner wiring)
+  03_eval/            scenarios.yaml + run_eval.py (ConversationGenerator + Scorer)
   README.md           this file
   .gitignore          excludes .venv/, build/, outputs/
 ```
@@ -120,5 +122,7 @@ Trace and response from one turn against `claude-sonnet-4-5`:
 The smoke test exercises one classification + flow against an `account_info` input to confirm the scaffolded agent functions end-to-end: the classifier returns the new intent at 0.95 confidence, the runner dispatches into the tool-less `account_info` flow, and the flow produces a structured response asking the customer for the missing information. The tool path is not exercised here because the `account_info` flow is tool-less by design; Step 2 exercises the tool path through the `order_status` and `refund_request` flows, and full intent coverage runs in Step 3 (eval).
 
 Next: [Step 2 — wire typed `@tool` handlers into AgentRunner](02_tools/README.md).
+
+Then: [Step 3 — evaluate the composed agent end-to-end](03_eval/README.md).
 
 ---
