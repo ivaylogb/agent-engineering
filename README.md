@@ -8,6 +8,22 @@ Most production agents fail in predictable ways: brittle tool calls, stale conte
 
 This is a set of four open-source kits that together codify what production agents need: evaluation loops, reliable tool contracts, runtime context management, and repeatable development workflows. Each kit is independently useful. Together they form an engineering discipline for shipping agents that behave predictably at scale.
 
+## Start with your failure mode
+
+Most agents fail in predictable ways. Pick the one you're seeing and go straight to the kit that addresses it.
+
+| You're seeing | Use this kit |
+|---|---|
+| Behavior regresses after prompt edits and you can't tell if changes help | [agent-eval-loop](https://github.com/ivaylogb/agent-eval-loop) |
+| The model picks the wrong tool, hallucinates parameters, or can't recover from tool errors | [agent-tool-kit](https://github.com/ivaylogb/agent-tool-kit) |
+| Context fills with stale tool results, irrelevant history, or instructions the model has stopped reading | [agent-context-kit](https://github.com/ivaylogb/agent-context-kit) |
+| Agent reviews are inconsistent — depend on whoever happens to be reviewing | [agent-skill-kit](https://github.com/ivaylogb/agent-skill-kit) |
+| You're starting a new agent and want patterns that work out of the box | [agent-skill-kit](https://github.com/ivaylogb/agent-skill-kit) — meta-agent scaffolds new agents from a description |
+
+The four kits are independent. Pick one. The four-layer model below explains how they fit together if you want the full system.
+
+---
+
 ## The four-layer model
 
 Production agents need four things working in concert:
