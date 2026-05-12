@@ -8,7 +8,7 @@ Most production agents fail in predictable ways: brittle tool calls, stale conte
 
 This is a set of four open-source kits that together codify what production agents need: evaluation loops, reliable tool contracts, runtime context management, and repeatable development workflows. Each kit is independently useful. Together they form an engineering discipline for shipping agents that behave predictably at scale.
 
-## Start with your failure mode
+## Common failure modes
 
 Most agents fail in predictable ways. Pick the one you're seeing and go straight to the kit that addresses it.
 
