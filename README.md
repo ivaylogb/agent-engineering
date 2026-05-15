@@ -34,6 +34,10 @@ Production agents need four things working in concert:
 | Context runtime | How do we keep the model focused? | agent-context-kit |
 | Development workflows | How do we make agent-building repeatable? | agent-skill-kit |
 
+## The diagnostic spec
+
+The four-layer model and structured edit format used across the diagnostic tools (agent-researcher, funnel-researcher, integration-watcher) are documented externally at [agent-diagnosis-spec](https://github.com/ivaylogb/agent-diagnosis-spec). The kit is the methodology; the spec is the structural opinion that makes implementations interoperate.
+
 ## Failure modes and system responses
 
 | Failure mode | System response |
