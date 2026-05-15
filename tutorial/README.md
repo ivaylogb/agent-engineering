@@ -39,13 +39,13 @@ Generated artifacts (`build/`, `.venv/`, `outputs/`) are gitignored.
 cd tutorial
 python3.11 -m venv .venv
 ./.venv/bin/pip install \
-    -e ../../agent-tool-kit \
-    -e ../../agent-eval-loop \
-    -e ../../agent-context-kit \
+    git+https://github.com/ivaylogb/agent-tool-kit.git \
+    git+https://github.com/ivaylogb/agent-eval-loop.git \
+    git+https://github.com/ivaylogb/agent-context-kit.git \
     "jinja2>=3.1.0"
 ```
 
-`agent-skill-kit` has no `pyproject.toml`. It's used via `PYTHONPATH`, not pip-installed.
+`agent-skill-kit` has no `pyproject.toml`, so it isn't pip-installed — clone it (`git clone https://github.com/ivaylogb/agent-skill-kit.git`) and point `PYTHONPATH` at the checkout where the steps below use it.
 
 ---
 
@@ -63,7 +63,7 @@ The spec lives at `01_scaffold/spec.json` and matches the `AgentSpec` dataclass 
 Run the scaffolder:
 
 ```bash
-PYTHONPATH=../../agent-skill-kit ./.venv/bin/python \
+PYTHONPATH=path/to/agent-skill-kit ./.venv/bin/python \
     -m scaffold_agent from-spec 01_scaffold/spec.json --output build/
 ```
 
